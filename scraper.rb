@@ -5,6 +5,7 @@ info_url = 'https://eservices.southgippsland.vic.gov.au/ePathway/ePathProd/Web/G
 comment_url = "mailto:council@southgippsland.vic.gov.au"
 
 agent = Mechanize.new
+agent.verify_mode = OpenSSL::SSL::VERIFY_NONE
 page = agent.get(info_url)
 
 # Click radio button 'Planning Application at Advertising'
