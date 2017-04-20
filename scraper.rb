@@ -1,31 +1,32 @@
-
 require 'scraperwiki'
 require 'mechanize'
 
+info_url = 'https://eservices.southgippsland.vic.gov.au/ePathway/ePathProd/Web/GeneralEnquiry/EnquiryLists.aspx?ModuleCode=LAP'
+comment_url = "mailto:council@southgippsland.vic.gov.au"
+
 agent = Mechanize.new
 agent.verify_mode = OpenSSL::SSL::VERIFY_NONE
+page = agent.get(info_url)
 
-# Performed for each application found
-def scrape_details(detail_page)
-  info_url = 'https://eservices.southgippsland.vic.gov.au/ePathway/ePathProd/Web/GeneralEnquiry/EnquiryDetailView.aspx?Id='
-# Pick out xpaths for data
-  council_reference = detail_page.at('//div[@class="fields"]/div[@class="field"][3]/td').text
-  address           = detail_page.at('//div[@class="fields"]/div[@class="field"][4]/td').text.gsub('  ', ', ')
-  description       = detail_page.at('//div[@class="fields"]/div[@class="field"][2]/td').text
-  info_url          = info_url << detail_page.at('//div[@id="ctl00_MainBodyContent_group_425"]/div[@class="fields"]/div[@class="field"]/td').text
+# Click radio button 'Planning Application at Advertising'
+form = page.form_with(:action => "EnquiryLists.aspx?ModuleCode=LAP")
+form["mDataGrid:Column0:Property"] = "ctl00$MainBodyContent$mDataList$ctl01$mDataGrid$ctl02$ctl00"
+form["ctl00$MainBodyContent$mContinueButton"] = "Next"
+page = form.submit
 
+page.search("tr.ContentPanel, tr.AlternateContentPanel").each do |tr|
   record = {
-    'council_reference' => council_reference,
-    'address' => address,
-    'description' => description,
+    'council_reference' => tr.search("a")[0].inner_text,
+    'address' => tr.search("span.ContentText, span.AlternateContentText")[0].inner_text.gsub('  ', ', '),
+    'description' => tr.search("span.ContentText, span.AlternateContentText")[1].inner_text,
     'info_url' => info_url,
-    'date_received' => @date_received,
-    'date_scraped' => @date_scraped,
-    'comment_url' => @comment_url,
+    'comment_url' => comment_url,
+    'date_scraped' => Date.today.to_s,
+    'date_received' => Date.parse(tr.search("span.ContentText, span.AlternateContentText")[2].inner_text).to_s,
   }
 
   if (ScraperWiki.select("* from data where `council_reference`='#{record['council_reference']}'").empty? rescue true)
-    puts "Storing " + record['council_reference']
+    puts "Storing " + record['council_reference'] + " - " + record['address']
 #    puts record
     ScraperWiki.save_sqlite(['council_reference'], record)
   else
@@ -33,16 +34,3 @@ def scrape_details(detail_page)
   end
 end
 
-# Read in a page
-page = agent.get("https://eservices.southgippsland.vic.gov.au/ePathway/ePathProd/Web/GeneralEnquiry/EnquiryLists.aspx?ModuleCode=LAP")
-@comment_url = "https://www.southgippsland.vic.gov.au/site/scripts/xforms_form.php?formID=193"
-@date_scraped = Date.today.to_s
-
-# Each EnquiryDetailView link is an application
-page.links.each do |link|
-  if link.href.to_s["EnquiryDetailView"]
-    detail_page = link.click
-    @date_received = Date.parse(link.node.parent.parent.next_sibling.next_sibling.next_sibling.text).to_s
-    scrape_details(detail_page)
-  end
-end

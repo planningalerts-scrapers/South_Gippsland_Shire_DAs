@@ -6,4 +6,5 @@ This site is a typical .NET site involves the followings.
 * Javascript - No
 * Ajax - No
 * JSON - No
+* Button to Press - Yes
 * Structured HTML - Reasonable
