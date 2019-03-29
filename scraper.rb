@@ -9,7 +9,7 @@ agent.verify_mode = OpenSSL::SSL::VERIFY_NONE
 page = agent.get(info_url)
 
 # Click radio button 'Planning Application at Advertising'
-form = page.form_with(:action => "EnquiryLists.aspx?ModuleCode=LAP")
+form = page.form_with(:action => "./EnquiryLists.aspx?ModuleCode=LAP")
 form["mDataGrid:Column0:Property"] = "ctl00$MainBodyContent$mDataList$ctl01$mDataGrid$ctl02$ctl00"
 form["ctl00$MainBodyContent$mContinueButton"] = "Next"
 page = form.submit
@@ -27,7 +27,7 @@ page.search("tr.ContentPanel, tr.AlternateContentPanel").each do |tr|
 
   if (ScraperWiki.select("* from data where `council_reference`='#{record['council_reference']}'").empty? rescue true)
     puts "Storing " + record['council_reference'] + " - " + record['address']
-#    puts record
+#     puts record
     ScraperWiki.save_sqlite(['council_reference'], record)
   else
     puts "Skipping already saved record " + record['council_reference']
