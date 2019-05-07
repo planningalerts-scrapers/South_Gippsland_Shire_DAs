@@ -25,12 +25,7 @@ page.search("tr.ContentPanel, tr.AlternateContentPanel").each do |tr|
     'date_received' => Date.parse(tr.search("span.ContentText, span.AlternateContentText")[2].inner_text).to_s,
   }
 
-  if (ScraperWiki.select("* from data where `council_reference`='#{record['council_reference']}'").empty? rescue true)
-    puts "Storing " + record['council_reference'] + " - " + record['address']
+  puts "Storing " + record['council_reference'] + " - " + record['address']
 #     puts record
-    ScraperWiki.save_sqlite(['council_reference'], record)
-  else
-    puts "Skipping already saved record " + record['council_reference']
-  end
+  ScraperWiki.save_sqlite(['council_reference'], record)
 end
-
