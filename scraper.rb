@@ -12,7 +12,7 @@ page = scraper.pick_type_of_search
 scraper.extract_table_data_and_urls(page.at("table.ContentPanel")).each do |row|
   record = {
     'council_reference' => row[:content]["Application number"],
-    'address' => row[:content]["Property Address"].gsub('  ', ', '),
+    'address' => row[:content]["Property Address"],
     'description' => row[:content]["Application Proposal"],
     'info_url' => info_url,
     'date_scraped' => Date.today.to_s,
