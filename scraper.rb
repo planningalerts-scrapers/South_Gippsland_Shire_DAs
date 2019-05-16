@@ -1,28 +1,23 @@
-require 'scraperwiki'
-require 'mechanize'
+require 'epathway_scraper'
 
 info_url = 'https://eservices.southgippsland.vic.gov.au/ePathway/ePathProd/Web/GeneralEnquiry/EnquiryLists.aspx?ModuleCode=LAP'
 
-agent = Mechanize.new
-agent.verify_mode = OpenSSL::SSL::VERIFY_NONE
-page = agent.get(info_url)
+scraper = EpathwayScraper::Scraper.new(
+  base_url: info_url,
+  index: 0
+)
 
-# Click radio button 'Planning Application at Advertising'
-form = page.form_with(:action => "./EnquiryLists.aspx?ModuleCode=LAP")
-form["mDataGrid:Column0:Property"] = "ctl00$MainBodyContent$mDataList$ctl01$mDataGrid$ctl02$ctl00"
-form["ctl00$MainBodyContent$mContinueButton"] = "Next"
-page = form.submit
+page = scraper.pick_type_of_search
 
-page.search("tr.ContentPanel, tr.AlternateContentPanel").each do |tr|
+scraper.extract_table_data_and_urls(page.at("table.ContentPanel")).each do |row|
   record = {
-    'council_reference' => tr.search("a")[0].inner_text,
-    'address' => tr.search("span.ContentText, span.AlternateContentText")[0].inner_text.gsub('  ', ', '),
-    'description' => tr.search("span.ContentText, span.AlternateContentText")[1].inner_text,
+    'council_reference' => row[:content]["Application number"],
+    'address' => row[:content]["Property Address"].gsub('  ', ', '),
+    'description' => row[:content]["Application Proposal"],
     'info_url' => info_url,
     'date_scraped' => Date.today.to_s,
-    'date_received' => Date.parse(tr.search("span.ContentText, span.AlternateContentText")[2].inner_text).to_s,
+    'date_received' => Date.parse(row[:content]["Application Date"]).to_s
   }
-
   puts "Storing " + record['council_reference'] + " - " + record['address']
 #     puts record
   ScraperWiki.save_sqlite(['council_reference'], record)
