@@ -2,7 +2,6 @@ require 'scraperwiki'
 require 'mechanize'
 
 info_url = 'https://eservices.southgippsland.vic.gov.au/ePathway/ePathProd/Web/GeneralEnquiry/EnquiryLists.aspx?ModuleCode=LAP'
-comment_url = "mailto:council@southgippsland.vic.gov.au"
 
 agent = Mechanize.new
 agent.verify_mode = OpenSSL::SSL::VERIFY_NONE
@@ -20,7 +19,6 @@ page.search("tr.ContentPanel, tr.AlternateContentPanel").each do |tr|
     'address' => tr.search("span.ContentText, span.AlternateContentText")[0].inner_text.gsub('  ', ', '),
     'description' => tr.search("span.ContentText, span.AlternateContentText")[1].inner_text,
     'info_url' => info_url,
-    'comment_url' => comment_url,
     'date_scraped' => Date.today.to_s,
     'date_received' => Date.parse(tr.search("span.ContentText, span.AlternateContentText")[2].inner_text).to_s,
   }
